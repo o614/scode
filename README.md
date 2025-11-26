@@ -22,7 +22,8 @@
 
 ## 🚀 Demo
 
-![Uploading e3671a54-8c9c-4224-9648-65ae2657ac8c.gif…]()
+![e3671a54-8c9c-4224-9648-65ae2657ac8c](https://github.com/user-attachments/assets/b24724ef-aa7a-43c5-8043-a8f987ee9bf0)
+
 
 * 在线演示：[https://scode-rose.vercel.app](https://scode-rose.vercel.app)
 
