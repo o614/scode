@@ -21,7 +21,8 @@
 * 任何你想“稍微加一道门”的网页资源
 
 ## 🚀 Demo
-![Demo 演示]([粘贴你那个长链接](https://private-user-images.githubusercontent.com/49578959/519102495-e4fe3a59-26a3-46e7-9eb0-997b6e597fc4.gif?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjQxNDk5NTgsIm5iZiI6MTc2NDE0OTY1OCwicGF0aCI6Ii80OTU3ODk1OS81MTkxMDI0OTUtZTRmZTNhNTktMjZhMy00NmU3LTllYjAtOTk3YjZlNTk3ZmM0LmdpZj9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTExMjYlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUxMTI2VDA5MzQxOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTRhMDUxOTZhYTJlMzk2ZDBiOGE1M2U1N2FiMmM5Mzg4ZGE0ZjJhMTEwYWQ1NTBhYmNkMWJlODI4NGNlMDI2NjImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.RyPXAc6DjaANxuqZusCEIXLeQiukx0wgL2TJRccqZ2k))
+
+![Uploading e3671a54-8c9c-4224-9648-65ae2657ac8c.gif…]()
 
 * 在线演示：[https://scode-rose.vercel.app](https://scode-rose.vercel.app)
 
