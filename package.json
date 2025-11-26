@@ -1,4 +1,7 @@
 {
+  "name": "wechat-scan-unlock",
+  "version": "1.0.0",
+  "description": "微信公众号扫码全自动解锁网页",
   "dependencies": {
     "xml2js": "^0.6.2",
     "@vercel/kv": "^1.0.1"
