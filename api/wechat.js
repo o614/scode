@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
       if (/^\d{4}$/.test(content)) {
         // 写入 Redis: Key="login:1234", Value="ok", 过期=300秒(5分钟)
         // 这里的过期时间要比前端超时时间长一点，留出余量
-        await kv.set(`login:${content}`, 'ok', { EX: 300 });
+        await kv.set(`login:${content}`, 'ok', { EX: 90 });
         
         replyText = "✅ 验证成功！\n\n网页正在自动解锁，请查看电脑/平板屏幕。";
       } else {
@@ -67,3 +67,4 @@ function getRawBody(req) {
     req.on('end', () => resolve(data));
   });
 }
+
