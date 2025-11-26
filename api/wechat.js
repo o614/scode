@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
         // 这里的过期时间要比前端超时时间长一点，留出余量
         await kv.set(`login:${content}`, 'ok', { EX: 90 });
         
-        replyText = "✅ 验证成功！\n\n网页正在自动解锁，请查看电脑/平板屏幕。";
+        replyText = "✅ 验证成功！\n\n网页正在解锁...";
       } else {
         // 默认回复引导语
         replyText = "请发送网页上显示的 4 位数字验证码。";
@@ -67,4 +67,5 @@ function getRawBody(req) {
     req.on('end', () => resolve(data));
   });
 }
+
 
