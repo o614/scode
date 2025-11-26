@@ -3,100 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>全自动验证演示</title>
+  <title>资源安全验证</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    @keyframes pulse-ring {
-      0% { transform: scale(0.8); opacity: 0.5; }
-      100% { transform: scale(1.3); opacity: 0; }
-    }
-    .ring-anim {
-      position: absolute;
-      border-radius: 50%;
-      border: 2px solid #3b82f6;
-      width: 100%; height: 100%;
-      animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-    }
+    /* 进场动画 */
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen text-gray-800">
+<body class="bg-gray-50 text-gray-800 min-h-screen flex items-center justify-center p-4 font-sans">
 
-  <div id="lockScreen" class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-sm w-full border border-gray-100 relative overflow-hidden transition-all duration-500">
+  <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 fade-in relative">
     
-    <div class="mb-6 relative inline-block">
-      <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 relative z-10">
-        <i class="ph-fill ph-lock-key text-4xl"></i>
+    <div id="step-verify" class="p-8 text-center">
+      <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <i class="ph-fill ph-lock-key text-3xl"></i>
       </div>
-      <div class="ring-anim top-0 left-0"></div>
+      
+      <h2 class="text-2xl font-bold mb-2">访问受限</h2>
+      <p class="text-gray-500 text-sm mb-8 leading-relaxed">
+        本资源仅限粉丝访问。<br>
+        请关注公众号，发送下方数字即可自动解锁。
+      </p>
+
+      <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-6 mb-6 relative group">
+        <div id="code-display" class="text-5xl font-mono font-bold tracking-widest text-gray-800">----</div>
+        
+        <div class="absolute top-2 right-3 text-xs font-medium text-gray-400">
+          <span id="timer">120</span>s 后过期
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-2 text-sm text-blue-600 font-medium bg-blue-50/50 py-3 rounded-xl">
+        <i class="ph-bold ph-spinner animate-spin"></i>
+        <span>等待手机确认中...</span>
+      </div>
     </div>
 
-    <h1 class="text-2xl font-bold mb-2">安全验证</h1>
-    <p class="text-gray-500 text-sm mb-8">请关注公众号，发送下方数字</p>
-
-    <div class="bg-gray-100 rounded-2xl p-6 mb-6">
-      <div id="codeDisplay" class="text-5xl font-mono font-bold tracking-widest text-gray-800">----</div>
+    <div id="step-timeout" class="hidden p-10 text-center">
+      <div class="w-16 h-16 bg-gray-100 text-gray-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <i class="ph-fill ph-clock-counter-clockwise text-3xl"></i>
+      </div>
+      <h2 class="text-xl font-bold mb-2 text-gray-700">验证码已过期</h2>
+      <p class="text-gray-500 text-sm mb-8">为了安全起见，验证码有效期为 2 分钟。</p>
+      <button onclick="location.reload()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition-all active:scale-95">
+        刷新页面
+      </button>
     </div>
 
-    <div class="flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
-      <i class="ph-bold ph-spinner animate-spin"></i>
-      <span>正在等待手机确认...</span>
-    </div>
-  </div>
+    <div id="step-success" class="hidden bg-green-50 p-10 text-center h-full absolute inset-0 flex flex-col justify-center items-center">
+      <div class="w-20 h-20 bg-white text-green-500 rounded-full flex items-center justify-center shadow-sm mb-6">
+        <i class="ph-fill ph-check-circle text-5xl"></i>
+      </div>
+      <h2 class="text-2xl font-bold mb-2 text-green-800">验证通过</h2>
+      <p class="text-green-600/80 mb-8">正在跳转至资源...</p>
+      </div>
 
-  <div id="successScreen" class="hidden bg-green-500 p-10 rounded-3xl shadow-2xl text-center max-w-sm w-full text-white transition-all duration-500 transform scale-95 opacity-0">
-    <div class="mb-6 w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-      <i class="ph-bold ph-check text-4xl"></i>
-    </div>
-    <h1 class="text-3xl font-bold mb-4">验证通过</h1>
-    <p class="text-green-100 mb-8">网页已自动解锁，欢迎回来。</p>
-    <button class="bg-white text-green-600 px-8 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-transform">
-      进入系统
-    </button>
   </div>
 
   <script>
-    // 1. 生成随机 4 位数 (1000-9999)
-    const challengeCode = Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('codeDisplay').innerText = challengeCode;
+    // --- ⚙️ 配置区域 (开源时改这里即可) ---
+    const CONFIG = {
+      apiBase: '/api/web', // 后端 API 地址
+      pollInterval: 5000,  // 轮询间隔 (5秒)
+      timeout: 120,        // 超时时间 (120秒)
+    };
 
-    // 2. 开始轮询 (每 2 秒问一次后端)
-    let pollInterval = setInterval(async () => {
-      try {
-        // 请求后端检查
-        const res = await fetch(`/api/web?type=check_login&code=${challengeCode}`);
-        const json = await res.json();
+    // --- 🚀 核心逻辑 ---
+    
+    // 1. 生成 4 位随机数 (1000-9999)
+    const code = Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('code-display').innerText = code;
 
-        if (json.status === 'success') {
-          // ✅ 成功！
-          clearInterval(pollInterval); // 停止轮询
-          showSuccess();
+    let timeLeft = CONFIG.timeout;
+    let timerInterval;
+    let pollInterval;
+
+    // 启动倒计时
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').innerText = timeLeft;
+        
+        if (timeLeft <= 0) {
+          handleTimeout();
         }
-      } catch (e) {
-        console.error('Polling error', e);
-      }
-    }, 2000);
-
-    // 切换到成功界面
-    function showSuccess() {
-      const lock = document.getElementById('lockScreen');
-      const success = document.getElementById('successScreen');
-
-      // 简单的淡出淡入动画
-      lock.style.opacity = '0';
-      lock.style.transform = 'scale(0.95)';
-      
-      setTimeout(() => {
-        lock.style.display = 'none';
-        success.classList.remove('hidden');
-        // 强制重绘以触发 transition
-        requestAnimationFrame(() => {
-          success.style.opacity = '1';
-          success.style.transform = 'scale(1)';
-        });
-      }, 300);
+      }, 1000);
     }
-  </script>
 
+    // 启动轮询
+    function startPolling() {
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
+          const json = await res.json();
+
+          if (json.status === 'success') {
+            handleSuccess(json.token);
+          }
+        } catch (e) {
+          console.error('Polling error', e);
+        }
+      }, CONFIG.pollInterval);
+    }
+
+    // 处理超时
+    function handleTimeout() {
+      clearInterval(timerInterval);
+      clearInterval(pollInterval);
+      document.getElementById('step-verify').classList.add('hidden');
+      document.getElementById('step-timeout').classList.remove('hidden');
+    }
+
+    // 处理成功
+    function handleSuccess(token) {
+      clearInterval(timerInterval);
+      clearInterval(pollInterval);
+      
+      // 保存 Token
+      localStorage.setItem('access_token', token);
+
+      // 切换 UI
+      document.getElementById('step-verify').classList.add('hidden');
+      document.getElementById('step-success').classList.remove('hidden');
+
+      // 模拟跳转 (实际使用时替换为你真正的内容页 URL)
+      console.log('拿到 Token:', token);
+      // setTimeout(() => window.location.href = '/real-content', 1500);
+    }
+
+    // 初始化
+    startTimer();
+    startPolling();
+
+  </script>
 </body>
 </html>
