@@ -37,6 +37,7 @@
 ---
 
 ## 🛠 部署指南 (Deploy)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/o614/wechat-scan-unlock)
 
 本项目非常适合部署在 Vercel 上。
 
