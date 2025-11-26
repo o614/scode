@@ -105,3 +105,11 @@ const CONFIG = {
   timeout: 60,        // 验证码有效期，单位秒
   urgentTime: 15      // 剩余多少秒进入“红色紧急倒计时”
 };
+
+/
+├── api/
+│   ├── wechat.js      # 微信服务器回调接口，处理消息、校验签名
+│   └── web.js         # 网页端接口：生成验证码、轮询状态等
+├── index.html         # 前端页面（扫码 + 倒计时 + 自动跳转）
+├── package.json       # 依赖与脚本
+└── README.md          # 本说明文档
