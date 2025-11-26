@@ -1,40 +1,46 @@
 // api/wechat.js
-const { kv } = require('@vercel/kv'); // 引入数据库
+const { kv } = require('@vercel/kv');
 const crypto = require('crypto');
 const { Parser, Builder } = require('xml2js');
 
-const WECHAT_TOKEN = process.env.WECHAT_TOKEN;
+// 环境变量
+const TOKEN = process.env.WECHAT_TOKEN;
+
 const parser = new Parser({ explicitArray: false, trim: true });
 const builder = new Builder({ cdata: true, rootName: 'xml', headless: true });
 
 module.exports = async (req, res) => {
-  // GET 验证逻辑保持不变
+  // 1. 微信服务器配置验证 (GET)
   if (req.method === 'GET') {
     const { signature, timestamp, nonce, echostr } = req.query;
-    const params = [WECHAT_TOKEN || '', timestamp, nonce].sort();
+    const params = [TOKEN, timestamp, nonce].sort();
     const hash = crypto.createHash('sha1').update(params.join('')).digest('hex');
-    return hash === signature ? res.send(echostr) : res.send('error');
+    return hash === signature ? res.send(echostr) : res.status(401).send('Invalid Signature');
   }
 
-  // POST 消息处理
+  // 2. 业务逻辑处理 (POST)
   if (req.method === 'POST') {
     try {
       const rawBody = await getRawBody(req);
       const { xml: msg } = await parser.parseStringPromise(rawBody);
       const content = (msg.Content || '').trim();
-      
-      let replyText = '请发送网页上的 4 位验证码。';
+      let replyText = '';
 
       // --- 核心逻辑：全自动验证 ---
-      // 如果收到的是 4 位数字 (例如 8848)
+      // 匹配 4 位纯数字
       if (/^\d{4}$/.test(content)) {
-        // 存入 Redis：Key="login:8848", Value="1", 5分钟过期
-        await kv.set(`login:${content}`, '1', { EX: 300 });
+        // 写入 Redis: Key="login:1234", Value="ok", 过期=300秒(5分钟)
+        // 这里的过期时间要比前端超时时间长一点，留出余量
+        await kv.set(`login:${content}`, 'ok', { EX: 300 });
         
-        replyText = "✅ 验证成功！\n\n您的网页即将自动跳转，无需任何操作。";
+        replyText = "✅ 验证成功！\n\n网页正在自动解锁，请查看电脑/平板屏幕。";
+      } else {
+        // 默认回复引导语
+        replyText = "请发送网页上显示的 4 位数字验证码。";
       }
       // -------------------------
 
+      // 构建 XML 回复
       const xml = builder.buildObject({
         ToUserName: msg.FromUserName,
         FromUserName: msg.ToUserName,
@@ -42,16 +48,18 @@ module.exports = async (req, res) => {
         MsgType: 'text',
         Content: replyText
       });
+      
       res.setHeader('Content-Type', 'application/xml');
       return res.send(xml);
 
     } catch (e) {
-      console.error(e);
-      return res.send('');
+      console.error('WeChat Error:', e);
+      return res.send('success'); // 报错也要返回 success 避免微信重试
     }
   }
 };
 
+// 辅助函数：读取流数据
 function getRawBody(req) {
   return new Promise((resolve) => {
     let data = '';
