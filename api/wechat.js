@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
         replyText = "✅ 验证成功！\n\n网页正在解锁...";
       } else {
         // 默认回复引导语
-        replyText = "请发送网页上显示的 4 位数字验证码。";
+        replyText = "hi";
       }
       // -------------------------
 
@@ -67,5 +67,6 @@ function getRawBody(req) {
     req.on('end', () => resolve(data));
   });
 }
+
 
 
