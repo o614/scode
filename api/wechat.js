@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
         // 写入 Redis
         await kv.set(`login:${content}`, 'ok', { EX: 300 });
         
-        replyText = "✅ 验证成功！\n网页解锁中...";
+        replyText = "✅ 验证成功！网页已解锁";
       }
       // ----------------
 
@@ -66,4 +66,5 @@ function getRawBody(req) {
     req.on('end', () => resolve(data));
   });
 }
+
 
