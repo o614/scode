@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机密保险箱</title>
+  <style>
+    body { background: #1a1a1a; color: #0f0; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .box { border: 2px solid #0f0; padding: 30px; max-width: 400px; text-align: center; box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); border-radius: 8px; }
+    h1 { margin-top: 0; text-transform: uppercase; letter-spacing: 2px; }
+    .code-display { font-size: 48px; font-weight: bold; margin: 20px 0; letter-spacing: 5px; color: white; text-shadow: 0 0 10px #0f0; }
+    input { background: #333; border: 1px solid #0f0; color: #fff; padding: 10px; font-size: 18px; width: 80%; text-align: center; margin-bottom: 15px; outline: none; font-family: monospace; letter-spacing: 2px; }
+    button { background: #0f0; color: #000; border: none; padding: 10px 30px; font-size: 18px; font-weight: bold; cursor: pointer; font-family: monospace; }
+    button:active { opacity: 0.8; }
+    .hidden { display: none; }
+    #secretArea { border-top: 1px dashed #0f0; margin-top: 20px; padding-top: 20px; color: #fff; }
+    .step { font-size: 14px; color: #888; margin-bottom: 20px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>🔒 机密保险箱</h1>
+    
+    <div id="lockScreen">
+      <div class="step">
+        1. 关注公众号<br>
+        2. 发送下方数字获取密码
+      </div>
+      
+      <div class="code-display" id="challenge">----</div>
+      
+      <input type="text" id="inputCode" placeholder="在此输入 6 位密码" maxlength="6">
+      <br>
+      <button onclick="unlock()">解 锁</button>
+    </div>
+
+    <div id="secretArea" class="hidden">
+      <h2 style="color:#0f0">🔓 访问批准</h2>
+      <h3 id="secretTitle"></h3>
+      <p id="secretContent" style="font-size: 24px; font-weight:bold;"></p>
+      <p id="secretNote" style="color:#888; font-size:12px;"></p>
+    </div>
+  </div>
+
+  <script>
+    // 1. 生成随机 4 位挑战码
+    const randomCode = Math.floor(1000 + Math.random() * 9000).toString();
+    document.getElementById('challenge').innerText = randomCode;
+
+    async function unlock() {
+      const code = document.getElementById('inputCode').value.trim();
+      if (!code) return alert('请输入密码');
+
+      const btn = document.querySelector('button');
+      btn.innerText = '验 证 中...';
+
+      try {
+        // 请求后端验证
+        const res = await fetch(`/api/verify?challenge=${randomCode}&code=${code}`);
+        const json = await res.json();
+
+        if (json.success) {
+          // 验证成功，显示机密数据
+          document.getElementById('lockScreen').classList.add('hidden');
+          document.getElementById('secretArea').classList.remove('hidden');
+          
+          // 渲染后端传来的数据
+          document.getElementById('secretTitle').innerText = json.secret.title;
+          document.getElementById('secretContent').innerText = json.secret.content;
+          document.getElementById('secretNote').innerText = json.secret.note;
+        } else {
+          alert('❌ ' + json.msg);
+          btn.innerText = '解 锁';
+        }
+      } catch (e) {
+        alert('网络错误');
+        btn.innerText = '解 锁';
+      }
+    }
+  </script>
+</body>
+</html>
