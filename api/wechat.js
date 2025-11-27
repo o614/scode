@@ -22,11 +22,10 @@ module.exports = async (req, res) => {
       let replyText = '';
 
       if (/^\d{4}$/.test(content)) {
-        // 1. 检查状态
         const currentStatus = await kv.get(`login:${content}`);
 
         if (currentStatus === 'pending') {
-          // 2. 【优化】验证通过后，强制续期 60秒，防止立刻过期导致前端查不到
+          // 【优化】验证成功后，数据只保留 60秒，足够前端读取了，节省空间
           await kv.set(`login:${content}`, 'ok', { EX: 60 });
           replyText = "✅ 验证成功！\n\n网页正在自动解锁，请查看电脑屏幕。";
         } else {
