@@ -4,6 +4,7 @@
   "description": "微信公众号扫码全自动解锁网页",
   "dependencies": {
     "xml2js": "^0.6.2",
-    "@vercel/kv": "^1.0.1"
+    "@vercel/kv": "^1.0.1",
+    "axios": "^1.7.0"
   }
 }
