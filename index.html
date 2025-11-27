@@ -47,147 +47,170 @@
       <p class="text-gray-500 text-sm mb-6 text-center">请扫码关注，发送下方数字解锁</p>
 
       <div class="w-32 h-32 bg-gray-100 p-1.5 rounded-xl border border-gray-100 shadow-sm mb-6 overflow-hidden">
-        <img src="https://img14.360buyimg.com/ling/jfs/t1/357137/38/17178/6526/6926bbc1F2518fce2/9326a50442957ff5.jpg" class="w-full h-full object-cover rounded-lg select-none pointer-events-none" alt="QR Code">
+        <img src="https://www.haiyan.gov.cn/picture/-1/240308141912543626.png" class="w-full h-full object-cover rounded-lg select-none pointer-events-none" alt="QR Code">
       </div>
 
       <div id="code-box" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-5 mb-4 transition-all duration-300 flex flex-col items-center justify-center group relative overflow-hidden">
-        <div id="timer-text" class="absolute top-2 right-3 text-[10px] font-bold text-gray-400 bg-gray-200/50 px-2 py-0.5 rounded-full">120s</div>
+        <div id="timer-text" class="absolute top-2 right-3 text-[10px] font-bold text-gray-400 bg-gray-200/50 px-2 py-0.5 rounded-full">60s</div>
         <div id="code-display" class="text-4xl font-mono font-bold tracking-widest text-gray-800 transition-colors duration-300 relative z-10">----</div>
         <div id="urgent-bg" class="absolute inset-0 bg-red-50 opacity-0 transition-opacity duration-500"></div>
       </div>
 
       <div id="status-text" class="text-sm text-apple-blue font-medium flex items-center gap-2 h-6">
         <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <span>等待系统确认...</span>
+        <span>等待手机确认...</span>
       </div>
     </div>
 
     <div id="step-timeout" class="absolute inset-0 bg-white/80 backdrop-blur-md z-20 hidden flex-col items-center justify-center p-10 text-center fade-in">
       <div class="w-16 h-16 bg-gray-100 text-gray-500 rounded-2xl flex items-center justify-center mb-4"><i class="ph-fill ph-clock-counter-clockwise text-3xl"></i></div>
       <h3 class="text-xl font-bold mb-2">验证码已失效</h3>
-      <p class="text-gray-500 text-sm mb-6">为了安全起见，验证码仅 2 分钟内有效。</p>
-      <button onclick="location.reload()" class="bg-black text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:scale-105 active:scale-95 transition-transform shadow-lg">刷新获取新码</button>
+      <p class="text-gray-500 text-sm mb-6">验证码有效期为 60 秒，请重新获取。</p>
+      <button onclick="location.reload()" class="bg-black text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:scale-105 active:scale-95 transition-transform shadow-lg">刷新页面</button>
     </div>
 
     <div id="step-success" class="absolute inset-0 bg-green-500 z-30 hidden flex-col items-center justify-center text-white fade-in">
       <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-inner"><i class="ph-bold ph-check text-4xl text-white"></i></div>
       <h2 class="text-3xl font-bold mb-2">验证通过</h2>
-      <p class="text-green-100 text-sm">正在进入...</p>
+      <p class="text-green-100 text-sm">欢迎回来，正在跳转...</p>
     </div>
   </div>
 
   <script>
     const CONFIG = {
       apiBase: '/api/web', 
-      pollInterval: 3000, 
-      timeout: 120,        
+      pollInterval: 5000, // 【优化】改为 5秒轮询，大大减轻服务器压力
+      timeout: 60,        // 【优化】改为 60秒超时
       urgentTime: 15      
     };
 
-    // 【优化】使用 Crypto 生成更随机的数字
-    function generateRandomCode() {
-      const array = new Uint32Array(1);
-      window.crypto.getRandomValues(array);
-      return (array[0] % 9000) + 1000;
-    }
-    
-    const code = generateRandomCode();
-    document.getElementById('code-display').innerText = code;
-    
-    let timeLeft = CONFIG.timeout;
-    let isPolling = true; // 轮询开关
-
-    // 倒计时动画逻辑
-    const circle = document.getElementById('progress-ring');
-    const radius = circle.r.baseVal.value;
-    const circumference = radius * 2 * Math.PI;
-    circle.style.strokeDasharray = `${circumference} ${circumference}`;
-    circle.style.strokeDashoffset = circumference;
-
-    function setProgress(percent) {
-      const offset = circumference - (percent / 100) * circumference;
-      circle.style.strokeDashoffset = offset;
-    }
-
-    const timerInterval = setInterval(() => {
-      timeLeft--;
-      setProgress((timeLeft / CONFIG.timeout) * 100);
-      document.getElementById('timer-text').innerText = timeLeft + 's';
-      if (timeLeft <= CONFIG.urgentTime) enableUrgentMode();
-      if (timeLeft <= 0) handleTimeout();
-    }, 1000);
-
-    // 初始化注册
-    async function init() {
-      try {
-        await fetch(`${CONFIG.apiBase}?type=init&code=${code}`);
-        poll(); // 注册成功后才开始轮询
-      } catch (e) {
-        console.error('Init failed', e);
-      }
-    }
-
-    // 【优化】使用递归 setTimeout 代替 setInterval，防止请求堆积
-    async function poll() {
-      if (!isPolling) return;
+    // --- 核心新增：自动检查缓存 (Remember Me) ---
+    function checkCachedToken() {
+      const token = localStorage.getItem('access_token');
+      const tokenTime = localStorage.getItem('token_time');
       
-      try {
-        const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
-        const json = await res.json();
-        if (json.status === 'success') {
-          handleSuccess(json.token);
-          return; // 成功后停止下一轮
+      // 如果有 Token，且在 7 天内 (7 * 24 * 60 * 60 * 1000 = 604800000)
+      if (token && tokenTime && (Date.now() - tokenTime < 604800000)) {
+        console.log('发现有效缓存，跳过验证');
+        // 直接显示成功页，不请求 init 接口
+        document.getElementById('step-verify').classList.add('hidden');
+        document.getElementById('step-success').classList.remove('hidden');
+        document.getElementById('step-success').classList.add('flex');
+        
+        setTimeout(() => {
+          window.location.href = 'https://apple.com'; // 直接跳转
+        }, 800);
+        return true; // 已登录
+      }
+      return false; // 未登录
+    }
+
+    // 只有未登录时，才执行下面的逻辑
+    if (!checkCachedToken()) {
+      startAuthFlow();
+    }
+
+    function startAuthFlow() {
+      const code = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('code-display').innerText = code;
+      
+      let timeLeft = CONFIG.timeout;
+      let isPolling = true;
+      
+      const circle = document.getElementById('progress-ring');
+      const radius = circle.r.baseVal.value;
+      const circumference = radius * 2 * Math.PI;
+      circle.style.strokeDasharray = `${circumference} ${circumference}`;
+      circle.style.strokeDashoffset = circumference;
+
+      function setProgress(percent) {
+        const offset = circumference - (percent / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+      }
+
+      // 启动倒计时
+      const timerInterval = setInterval(() => {
+        timeLeft--;
+        setProgress((timeLeft / CONFIG.timeout) * 100);
+        document.getElementById('timer-text').innerText = timeLeft + 's';
+        if (timeLeft <= CONFIG.urgentTime) enableUrgentMode();
+        if (timeLeft <= 0) handleTimeout();
+      }, 1000);
+
+      // 启动初始化
+      async function init() {
+        try {
+          await fetch(`${CONFIG.apiBase}?type=init&code=${code}`);
+          poll(); 
+        } catch (e) { console.error('Init failed', e); }
+      }
+
+      // 递归轮询 (使用 setTimeout)
+      async function poll() {
+        if (!isPolling) return;
+        
+        try {
+          const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
+          const json = await res.json();
+          if (json.status === 'success') {
+            handleSuccess(json.token);
+            return;
+          }
+        } catch (e) { console.error(e); }
+
+        if (isPolling) {
+          setTimeout(poll, CONFIG.pollInterval);
         }
-      } catch (e) { console.error(e); }
-
-      // 如果还在 polling 状态，隔几秒再问一次
-      if (isPolling) {
-        setTimeout(poll, CONFIG.pollInterval);
       }
-    }
 
-    function enableUrgentMode() {
-      document.getElementById('status-icon').classList.replace('text-apple-blue', 'text-apple-red');
-      document.getElementById('progress-ring').classList.replace('text-apple-blue', 'text-apple-red');
-      document.getElementById('status-text').classList.replace('text-apple-blue', 'text-apple-red');
-      document.getElementById('status-text').innerHTML = `<i class="ph-fill ph-warning"></i><span>即将过期，请抓紧！</span>`;
-      document.getElementById('code-display').classList.add('animate-shake', 'text-red-600');
-      document.getElementById('urgent-bg').classList.remove('opacity-0');
-      document.getElementById('urgent-bg').classList.add('opacity-100', 'animate-pulse');
-    }
+      // 样式控制
+      function enableUrgentMode() {
+        document.getElementById('status-icon').classList.replace('text-apple-blue', 'text-apple-red');
+        document.getElementById('progress-ring').classList.replace('text-apple-blue', 'text-apple-red');
+        document.getElementById('status-text').classList.replace('text-apple-blue', 'text-apple-red');
+        document.getElementById('status-text').innerHTML = `<i class="ph-fill ph-warning"></i><span>即将过期，请抓紧！</span>`;
+        document.getElementById('code-display').classList.add('animate-shake', 'text-red-600');
+        document.getElementById('urgent-bg').classList.remove('opacity-0');
+        document.getElementById('urgent-bg').classList.add('opacity-100', 'animate-pulse');
+      }
 
-    function stopUrgentMode() {
-      document.getElementById('code-display').classList.remove('animate-shake');
-      document.getElementById('urgent-bg').classList.remove('opacity-100', 'animate-pulse');
-      document.getElementById('urgent-bg').classList.add('opacity-0');
-      document.getElementById('code-display').classList.remove('text-red-600');
-      document.getElementById('code-display').classList.add('text-gray-400');
-    }
+      function stopUrgentMode() {
+        document.getElementById('code-display').classList.remove('animate-shake');
+        document.getElementById('urgent-bg').classList.remove('opacity-100', 'animate-pulse');
+        document.getElementById('urgent-bg').classList.add('opacity-0');
+        document.getElementById('code-display').classList.remove('text-red-600');
+        document.getElementById('code-display').classList.add('text-gray-400');
+      }
 
-    function handleTimeout() {
-      isPolling = false;
-      clearInterval(timerInterval);
-      stopUrgentMode();
-      document.getElementById('step-timeout').classList.remove('hidden');
-      document.getElementById('step-timeout').classList.add('flex');
-    }
+      function handleTimeout() {
+        isPolling = false;
+        clearInterval(timerInterval);
+        stopUrgentMode();
+        document.getElementById('step-timeout').classList.remove('hidden');
+        document.getElementById('step-timeout').classList.add('flex');
+      }
 
-    function handleSuccess(token) {
-      isPolling = false;
-      clearInterval(timerInterval);
-      stopUrgentMode();
-      
-      localStorage.setItem('access_token', token);
-      document.getElementById('step-success').classList.remove('hidden');
-      document.getElementById('step-success').classList.add('flex');
-      
-      setTimeout(() => {
-        window.location.href = 'https://example.com';
-      }, 1500);
-    }
+      function handleSuccess(token) {
+        isPolling = false;
+        clearInterval(timerInterval);
+        stopUrgentMode();
+        
+        // 【优化】记录 Token 和 时间
+        localStorage.setItem('access_token', token);
+        localStorage.setItem('token_time', Date.now());
 
-    setProgress(100);
-    init();
+        document.getElementById('step-success').classList.remove('hidden');
+        document.getElementById('step-success').classList.add('flex');
+        
+        setTimeout(() => {
+          // 【TODO: 修改跳转链接】
+          window.location.href = 'https://apple.com'; 
+        }, 1500);
+      }
+
+      setProgress(100);
+      init();
+    }
   </script>
 </body>
 </html>
