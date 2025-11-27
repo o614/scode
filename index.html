@@ -7,7 +7,8 @@
   <title>Movie Hub</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@phosphor-icons/web"></script>
 
   <script>
     tailwind.config = {
@@ -17,24 +18,42 @@
           colors: {
             dark: { bg: '#000000', card: '#1C1C1E', text: '#F5F5F7', sub: '#98989D', border: 'rgba(255,255,255,0.15)', input: 'rgba(255, 255, 255, 0.1)' }
           },
-          fontFamily: { sans: ['SF Pro Display', '-apple-system', 'sans-serif'] },
-          animation: { 
-            'enter': 'enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            'shake': 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite',
-          },
-          keyframes: { 
-            enter: { '0%': { opacity: '0', transform: 'translateY(20px) scale(0.98)' }, '100%': { opacity: '1', transform: 'translateY(0) scale(1)' } },
-            shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } }
-          }
+          fontFamily: { sans: ['SF Pro Display', '-apple-system', 'sans-serif'] }
         }
       }
     }
   </script>
+  
   <style>
     body { background-color: #000000; color: #F5F5F7; }
-    .page { display: none; opacity: 0; }
-    .page.active { display: block; animation: enter 0.5s forwards; }
+    
+    /* --- 修复核心：原生 CSS 动画定义 --- */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    /* 默认隐藏页面 */
+    .page { display: none; }
+    
+    /* 激活后执行原生动画 */
+    .page.active { 
+      display: block; 
+      animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+    }
+
     .progress-ring__circle { transition: stroke-dashoffset 1s linear; transform: rotate(-90deg); transform-origin: 50% 50%; }
+    
+    /* 辅助类 */
+    .active-scale:active { transform: scale(0.96); transition: transform 0.1s; }
+    .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite; }
   </style>
 </head>
 
@@ -161,7 +180,7 @@
   </div>
 
   <script>
-    // --- ⚙️ 全局配置 ---
+    // --- ⚙️ 配置 ---
     const CONFIG = {
       apiBase: '/api/web', 
       pollInterval: 3000, 
@@ -170,18 +189,16 @@
     };
 
     let isUnlocked = false;
-    let currentResource = {}; // 暂存当前点击的资源信息
+    let currentResource = {};
 
-    // --- 页面路由逻辑 ---
+    // --- 页面逻辑 ---
     function showPage(pageId) {
       document.querySelectorAll('.page').forEach(el => {
         el.classList.remove('active');
-        el.style.opacity = 0; 
+        el.style.opacity = 0; // 重置透明度
       });
       const target = document.getElementById('page-' + pageId);
-      target.classList.add('active');
-      // 触发重绘动画
-      setTimeout(() => target.style.opacity = 1, 10);
+      target.classList.add('active'); // 这里的 active 会触发 CSS 动画
     }
 
     function quickSearch(keyword) {
@@ -189,16 +206,15 @@
       doSearch();
     }
 
-    // --- 模拟搜索逻辑 (核心假数据生成) ---
     function doSearch() {
       const q = document.getElementById('searchInput').value.trim();
       if (!q) return document.getElementById('searchInput').focus();
 
       document.getElementById('searchKeyword').innerText = q;
       const list = document.getElementById('resultsList');
-      list.innerHTML = ''; // 清空旧结果
+      list.innerHTML = ''; 
 
-      // 模拟生成 3 条数据 (阿里、夸克、百度)
+      // 假数据生成
       const mockData = [
         { type: 'aliyun', name: '阿里云盘', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: 'ph-cloud', link: 'https://www.aliyundrive.com/s/fake_link_ali' },
         { type: 'quark',  name: '夸克网盘', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: 'ph-atom', link: 'https://pan.quark.cn/s/fake_link_quark' },
@@ -233,20 +249,18 @@
       showPage('results');
     }
 
-    // --- 资源点击拦截逻辑 ---
+    // --- 资源点击 ---
     function handleResourceClick(link, title) {
       currentResource = { link, title };
       
       if (checkCachedToken()) {
-        // 已解锁，直接显示结果
         showLinkModal();
       } else {
-        // 未解锁，弹出验证
         openModal();
       }
     }
 
-    // --- 验证弹窗逻辑 (复用之前的核心) ---
+    // --- 验证弹窗 ---
     let timerInterval, pollInterval;
 
     function openModal() {
@@ -258,8 +272,6 @@
         card.classList.remove('scale-95');
         card.classList.add('scale-100');
       }, 10);
-      
-      // 启动验证流程
       startAuthFlow();
     }
 
@@ -272,7 +284,6 @@
         modal.classList.add('hidden');
         resetModalUI();
       }, 300);
-      // 停止所有计时器
       clearInterval(timerInterval);
       clearInterval(pollInterval);
     }
@@ -282,17 +293,15 @@
       document.getElementById('step-success').classList.add('hidden');
     }
 
-    // --- 核心验证代码 (与之前一致) ---
+    // --- 核心验证 ---
     function startAuthFlow() {
       const code = Math.floor(1000 + Math.random() * 9000);
       document.getElementById('code-display').innerText = code;
       
       let timeLeft = CONFIG.timeout;
       
-      // 初始化后端
       fetch(`${CONFIG.apiBase}?type=init&code=${code}`).catch(console.error);
 
-      // 倒计时 UI
       const circle = document.getElementById('progress-ring');
       const circumference = circle.r.baseVal.value * 2 * Math.PI;
       circle.style.strokeDasharray = `${circumference} ${circumference}`;
@@ -315,7 +324,6 @@
         }
       }, 1000);
 
-      // 轮询
       pollInterval = setInterval(async () => {
         try {
           const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
@@ -338,22 +346,19 @@
       document.getElementById('step-success').classList.remove('hidden');
       document.getElementById('step-success').classList.add('flex');
       
-      // 更新全局状态
       isUnlocked = true;
       updateLockStatus();
 
-      // 1.5秒后关闭验证窗，打开链接窗
       setTimeout(() => {
         closeModal();
         showLinkModal();
       }, 1500);
     }
 
-    // --- 链接显示弹窗 ---
+    // --- 链接弹窗 ---
     function showLinkModal() {
       const modal = document.getElementById('linkModal');
       const card = document.getElementById('linkCard');
-      
       document.getElementById('resourceName').innerText = currentResource.title;
       document.getElementById('realLink').innerText = currentResource.link;
       document.getElementById('jumpBtn').href = currentResource.link;
@@ -377,11 +382,10 @@
       alert('已复制到剪贴板');
     }
 
-    // --- 状态检查 ---
     function checkCachedToken() {
       const token = localStorage.getItem('access_token');
       const time = localStorage.getItem('token_time');
-      if (token && time && (Date.now() - time < 604800000)) { // 7天有效期
+      if (token && time && (Date.now() - time < 604800000)) { 
         isUnlocked = true;
         updateLockStatus();
         return true;
@@ -395,7 +399,6 @@
       el.innerHTML = '<i class="ph-fill ph-check-circle"></i> 已解锁';
     }
 
-    // 初始化
     checkCachedToken();
   </script>
 </body>
