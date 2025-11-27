@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
         if (currentStatus === 'pending') {
           // 【优化】验证成功后，数据只保留 60秒，足够前端读取了，节省空间
           await kv.set(`login:${content}`, 'ok', { EX: 60 });
-          replyText = "🟢 验证成功！网页已解锁";
+          replyText = "🟢 验证成功！网页解锁中";
         } else {
           replyText = "🔴 验证失败！请检查输入";
         }
@@ -61,4 +61,5 @@ function getRawBody(req) {
     req.on('end', () => resolve(data));
   });
 }
+
 
