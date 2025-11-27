@@ -48,7 +48,6 @@
   <div class="bg-white w-full max-w-[420px] rounded-[32px] shadow-2xl shadow-black/5 overflow-hidden border border-white/50 animate-fade-in relative">
     
     <div id="step-verify" class="p-8 flex flex-col items-center transition-all duration-300">
-      
       <div class="relative w-20 h-20 mb-4 flex items-center justify-center">
         <svg class="w-20 h-20 absolute top-0 left-0">
           <circle class="text-gray-100" stroke-width="5" stroke="currentColor" fill="transparent" r="36" cx="40" cy="40"/>
@@ -61,60 +60,52 @@
       <p class="text-gray-500 text-sm mb-6 text-center">请扫码关注，发送下方数字解锁</p>
 
       <div class="w-32 h-32 bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm mb-6">
-        <img src="//img14.360buyimg.com/ling/jfs/t1/357137/38/17178/6526/6926bbc1F2518fce2/9326a50442957ff5.jpg" class="w-full h-full object-cover rounded-lg select-none pointer-events-none" alt="QR Code">
+        <img src="https://www.haiyan.gov.cn/picture/-1/240308141912543626.png" class="w-full h-full object-cover rounded-lg select-none pointer-events-none" alt="QR Code">
       </div>
 
       <div id="code-box" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-5 mb-4 transition-all duration-300 flex flex-col items-center justify-center group relative overflow-hidden">
-        <div id="timer-text" class="absolute top-2 right-3 text-[10px] font-bold text-gray-400 bg-gray-200/50 px-2 py-0.5 rounded-full">60s</div>
-        
+        <div id="timer-text" class="absolute top-2 right-3 text-[10px] font-bold text-gray-400 bg-gray-200/50 px-2 py-0.5 rounded-full">120s</div>
         <div id="code-display" class="text-4xl font-mono font-bold tracking-widest text-gray-800 transition-colors duration-300 relative z-10">----</div>
-        
         <div id="urgent-bg" class="absolute inset-0 bg-red-50 opacity-0 transition-opacity duration-500"></div>
       </div>
 
       <div id="status-text" class="text-sm text-apple-blue font-medium flex items-center gap-2 h-6">
-        <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span>等待系统确认...</span>
+        <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <span>等待手机确认...</span>
       </div>
     </div>
 
     <div id="step-timeout" class="absolute inset-0 bg-white/80 backdrop-blur-md z-20 hidden flex-col items-center justify-center p-10 text-center fade-in">
-      <div class="w-16 h-16 bg-gray-100 text-gray-500 rounded-2xl flex items-center justify-center mb-4">
-        <i class="ph-fill ph-clock-counter-clockwise text-3xl"></i>
-      </div>
+      <div class="w-16 h-16 bg-gray-100 text-gray-500 rounded-2xl flex items-center justify-center mb-4"><i class="ph-fill ph-clock-counter-clockwise text-3xl"></i></div>
       <h3 class="text-xl font-bold mb-2">验证码已失效</h3>
-      <p class="text-gray-500 text-sm mb-6">为了安全起见，验证码仅 60 秒内有效。</p>
-      <button onclick="location.reload()" class="bg-black text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:scale-105 active:scale-95 transition-transform shadow-lg">
-        刷新获取新码
-      </button>
+      <p class="text-gray-500 text-sm mb-6">为了安全起见，验证码仅 2 分钟内有效。</p>
+      <button onclick="location.reload()" class="bg-black text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:scale-105 active:scale-95 transition-transform shadow-lg">刷新获取新码</button>
     </div>
 
     <div id="step-success" class="absolute inset-0 bg-green-500 z-30 hidden flex-col items-center justify-center text-white fade-in">
-      <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-inner">
-        <i class="ph-bold ph-check text-4xl text-white"></i>
-      </div>
+      <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-inner"><i class="ph-bold ph-check text-4xl text-white"></i></div>
       <h2 class="text-3xl font-bold mb-2">验证通过</h2>
       <p class="text-green-100 text-sm">正在进入...</p>
     </div>
-
   </div>
 
   <script>
     const CONFIG = {
       apiBase: '/api/web', 
-      pollInterval: 3000, 
-      timeout: 60,        
-      urgentTime: 15      
+      pollInterval: 3000, // 3秒轮询
+      timeout: 120,       // 120秒超时
+      urgentTime: 15      // 最后15秒报警
     };
 
+    // 1. 生成随机数
     const code = Math.floor(1000 + Math.random() * 9000);
     document.getElementById('code-display').innerText = code;
     
     let timeLeft = CONFIG.timeout;
+    let timerInterval;
+    let pollInterval;
     
+    // 圆环动画初始化
     const circle = document.getElementById('progress-ring');
     const radius = circle.r.baseVal.value;
     const circumference = radius * 2 * Math.PI;
@@ -126,33 +117,50 @@
       circle.style.strokeDashoffset = offset;
     }
 
-    const timerInterval = setInterval(() => {
-      timeLeft--;
-      
-      const percent = (timeLeft / CONFIG.timeout) * 100;
-      setProgress(percent);
-      document.getElementById('timer-text').innerText = timeLeft + 's';
-
-      if (timeLeft <= CONFIG.urgentTime) {
-        enableUrgentMode();
+    // 【核心修改】初始化：先告诉服务器“我要占座”
+    async function initAndStart() {
+      try {
+        // 发送 init 请求
+        await fetch(`${CONFIG.apiBase}?type=init&code=${code}`);
+        
+        // 成功后启动倒计时和轮询
+        startTimer();
+        startPolling();
+      } catch (e) {
+        console.error('Init failed', e);
+        alert('连接服务器失败，请刷新重试');
       }
+    }
 
-      if (timeLeft <= 0) {
-        handleTimeout();
-      }
-    }, 1000);
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        setProgress((timeLeft / CONFIG.timeout) * 100);
+        document.getElementById('timer-text').innerText = timeLeft + 's';
 
+        if (timeLeft <= CONFIG.urgentTime) enableUrgentMode();
+        if (timeLeft <= 0) handleTimeout();
+      }, 1000);
+    }
+
+    function startPolling() {
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
+          const json = await res.json();
+          if (json.status === 'success') {
+            handleSuccess(json.token);
+          }
+        } catch (e) { console.error(e); }
+      }, CONFIG.pollInterval);
+    }
+
+    // 视觉效果函数
     function enableUrgentMode() {
       document.getElementById('status-icon').classList.replace('text-apple-blue', 'text-apple-red');
       document.getElementById('progress-ring').classList.replace('text-apple-blue', 'text-apple-red');
       document.getElementById('status-text').classList.replace('text-apple-blue', 'text-apple-red');
-      
-      // 紧急状态图标也换成原生的警告图标，确保不乱晃
-      document.getElementById('status-text').innerHTML = `
-        <svg class="h-4 w-4 text-current" fill="currentColor" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"></path></svg>
-        <span>即将过期，请抓紧！</span>
-      `;
-
+      document.getElementById('status-text').innerHTML = `<i class="ph-fill ph-warning"></i><span>即将过期，请抓紧！</span>`;
       document.getElementById('code-display').classList.add('animate-shake', 'text-red-600');
       document.getElementById('urgent-bg').classList.remove('opacity-0');
       document.getElementById('urgent-bg').classList.add('opacity-100', 'animate-pulse');
@@ -165,16 +173,6 @@
       document.getElementById('code-display').classList.remove('text-red-600');
       document.getElementById('code-display').classList.add('text-gray-400');
     }
-
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
-        const json = await res.json();
-        if (json.status === 'success') {
-          handleSuccess(json.token);
-        }
-      } catch (e) { console.error(e); }
-    }, CONFIG.pollInterval);
 
     function handleTimeout() {
       clearInterval(timerInterval);
@@ -194,11 +192,14 @@
       document.getElementById('step-success').classList.add('flex');
       
       setTimeout(() => {
-        window.location.href = 'https://example.com';
+        // 【TODO: 修改你的目标跳转链接】
+        window.location.href = 'https://apple.com'; 
       }, 1500);
     }
 
+    // 启动！
     setProgress(100);
+    initAndStart();
   </script>
 </body>
 </html>
