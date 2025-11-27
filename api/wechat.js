@@ -3,13 +3,14 @@ const { kv } = require('@vercel/kv');
 const crypto = require('crypto');
 const { Parser, Builder } = require('xml2js');
 
+// 环境变量
 const TOKEN = process.env.WECHAT_TOKEN;
 
 const parser = new Parser({ explicitArray: false, trim: true });
 const builder = new Builder({ cdata: true, rootName: 'xml', headless: true });
 
 module.exports = async (req, res) => {
-  // 1. 微信服务器验证 (GET)
+  // 1. 微信服务器配置验证 (GET)
   if (req.method === 'GET') {
     const { signature, timestamp, nonce, echostr } = req.query;
     const params = [TOKEN, timestamp, nonce].sort();
@@ -23,20 +24,30 @@ module.exports = async (req, res) => {
       const rawBody = await getRawBody(req);
       const { xml: msg } = await parser.parseStringPromise(rawBody);
       const content = (msg.Content || '').trim();
-      
-      let replyText = ''; // 默认不回复任何内容
+      let replyText = '';
 
-      // --- 核心逻辑 ---
-      // 只有匹配 4 位数字时，才处理并回复
+      // --- 核心逻辑：全自动验证 (修复版) ---
       if (/^\d{4}$/.test(content)) {
-        // 写入 Redis
-        await kv.set(`login:${content}`, 'ok', { EX: 300 });
-        
-        replyText = "✅ 验证成功！网页已解锁";
-      }
-      // ----------------
+        // 1. 先去 Redis 查一下，这个数字有没有网页在“占座” (pending)
+        const currentStatus = await kv.get(`login:${content}`);
 
-      // 如果有需要回复的内容，才发送 XML
+        if (currentStatus === 'pending') {
+          // 2. 查到了！说明确实有网页在等这个数。修改状态为 'ok'
+          // KEEPTTL: true 表示保留剩余过期时间，不重置倒计时
+          await kv.set(`login:${content}`, 'ok', { KEEPTTL: true });
+          
+          replyText = "✅ 验证成功！\n\n网页正在自动解锁，请查看电脑/平板屏幕。";
+        } else {
+          // 3. 没查到 (说明用户输错了，或者验证码已过期)
+          replyText = "❌ 验证码无效或已过期。\n\n请检查网页上显示的数字是否正确。";
+        }
+      } else {
+        // 不是 4 位数字，保持沉默
+        return res.send('success');
+      }
+      // -----------------------------------
+
+      // 如果有回复内容，发送 XML
       if (replyText) {
         const xml = builder.buildObject({
           ToUserName: msg.FromUserName,
@@ -47,14 +58,13 @@ module.exports = async (req, res) => {
         });
         res.setHeader('Content-Type', 'application/xml');
         return res.send(xml);
-      } else {
-        // 如果没有匹配到指令，直接返回 success (微信要求的“保持沉默”信号)
-        return res.send('success');
-      }
+      } 
+      
+      return res.send('success');
 
     } catch (e) {
       console.error('WeChat Error:', e);
-      return res.send('success'); // 出错也保持沉默，防止报错刷屏
+      return res.send('success'); 
     }
   }
 };
@@ -66,5 +76,3 @@ function getRawBody(req) {
     req.on('end', () => resolve(data));
   });
 }
-
-
