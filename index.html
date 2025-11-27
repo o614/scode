@@ -11,9 +11,7 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            apple: { blue: '#0071e3', red: '#ff3b30', gray: '#f5f5f7' }
-          },
+          colors: { apple: { blue: '#0071e3', red: '#ff3b30', gray: '#f5f5f7' } },
           animation: {
             'shake': 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite',
             'fade-in': 'fadeIn 0.5s ease-out forwards',
@@ -34,14 +32,7 @@
       }
     }
   </script>
-  
-  <style>
-    .progress-ring__circle {
-      transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
-      transform: rotate(-90deg);
-      transform-origin: 50% 50%;
-    }
-  </style>
+  <style>.progress-ring__circle { transition: stroke-dashoffset 1s linear, stroke 0.3s ease; transform: rotate(-90deg); transform-origin: 50% 50%; }</style>
 </head>
 <body class="bg-[#F5F5F7] text-[#1d1d1f] min-h-screen flex items-center justify-center p-4 font-sans antialiased">
 
@@ -49,18 +40,14 @@
     
     <div id="step-verify" class="p-8 flex flex-col items-center transition-all duration-300">
       <div class="relative w-20 h-20 mb-4 flex items-center justify-center">
-        <svg class="w-20 h-20 absolute top-0 left-0">
-          <circle class="text-gray-100" stroke-width="5" stroke="currentColor" fill="transparent" r="36" cx="40" cy="40"/>
-          <circle id="progress-ring" class="text-apple-blue progress-ring__circle" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="36" cx="40" cy="40"/>
-        </svg>
+        <svg class="w-20 h-20 absolute top-0 left-0"><circle class="text-gray-100" stroke-width="5" stroke="currentColor" fill="transparent" r="36" cx="40" cy="40"/><circle id="progress-ring" class="text-apple-blue progress-ring__circle" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="36" cx="40" cy="40"/></svg>
         <i id="status-icon" class="ph-fill ph-lock-key text-3xl text-apple-blue transition-colors duration-300"></i>
       </div>
-      
       <h2 class="text-2xl font-bold mb-1 tracking-tight">安全验证</h2>
       <p class="text-gray-500 text-sm mb-6 text-center">请扫码关注，发送下方数字解锁</p>
 
-      <div class="w-32 h-32 bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm mb-6">
-        <img src="https://www.haiyan.gov.cn/picture/-1/240308141912543626.png" class="w-full h-full object-cover rounded-lg select-none pointer-events-none" alt="QR Code">
+      <div class="w-32 h-32 bg-gray-100 p-1.5 rounded-xl border border-gray-100 shadow-sm mb-6 overflow-hidden">
+        <img src="https://img14.360buyimg.com/ling/jfs/t1/357137/38/17178/6526/6926bbc1F2518fce2/9326a50442957ff5.jpg" class="w-full h-full object-cover rounded-lg select-none pointer-events-none" alt="QR Code">
       </div>
 
       <div id="code-box" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-5 mb-4 transition-all duration-300 flex flex-col items-center justify-center group relative overflow-hidden">
@@ -71,7 +58,7 @@
 
       <div id="status-text" class="text-sm text-apple-blue font-medium flex items-center gap-2 h-6">
         <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <span>等待手机确认...</span>
+        <span>等待系统确认...</span>
       </div>
     </div>
 
@@ -92,20 +79,25 @@
   <script>
     const CONFIG = {
       apiBase: '/api/web', 
-      pollInterval: 3000, // 3秒轮询
-      timeout: 120,       // 120秒超时
-      urgentTime: 15      // 最后15秒报警
+      pollInterval: 3000, 
+      timeout: 120,        
+      urgentTime: 15      
     };
 
-    // 1. 生成随机数
-    const code = Math.floor(1000 + Math.random() * 9000);
+    // 【优化】使用 Crypto 生成更随机的数字
+    function generateRandomCode() {
+      const array = new Uint32Array(1);
+      window.crypto.getRandomValues(array);
+      return (array[0] % 9000) + 1000;
+    }
+    
+    const code = generateRandomCode();
     document.getElementById('code-display').innerText = code;
     
     let timeLeft = CONFIG.timeout;
-    let timerInterval;
-    let pollInterval;
-    
-    // 圆环动画初始化
+    let isPolling = true; // 轮询开关
+
+    // 倒计时动画逻辑
     const circle = document.getElementById('progress-ring');
     const radius = circle.r.baseVal.value;
     const circumference = radius * 2 * Math.PI;
@@ -117,45 +109,43 @@
       circle.style.strokeDashoffset = offset;
     }
 
-    // 【核心修改】初始化：先告诉服务器“我要占座”
-    async function initAndStart() {
+    const timerInterval = setInterval(() => {
+      timeLeft--;
+      setProgress((timeLeft / CONFIG.timeout) * 100);
+      document.getElementById('timer-text').innerText = timeLeft + 's';
+      if (timeLeft <= CONFIG.urgentTime) enableUrgentMode();
+      if (timeLeft <= 0) handleTimeout();
+    }, 1000);
+
+    // 初始化注册
+    async function init() {
       try {
-        // 发送 init 请求
         await fetch(`${CONFIG.apiBase}?type=init&code=${code}`);
-        
-        // 成功后启动倒计时和轮询
-        startTimer();
-        startPolling();
+        poll(); // 注册成功后才开始轮询
       } catch (e) {
         console.error('Init failed', e);
-        alert('连接服务器失败，请刷新重试');
       }
     }
 
-    function startTimer() {
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        setProgress((timeLeft / CONFIG.timeout) * 100);
-        document.getElementById('timer-text').innerText = timeLeft + 's';
+    // 【优化】使用递归 setTimeout 代替 setInterval，防止请求堆积
+    async function poll() {
+      if (!isPolling) return;
+      
+      try {
+        const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
+        const json = await res.json();
+        if (json.status === 'success') {
+          handleSuccess(json.token);
+          return; // 成功后停止下一轮
+        }
+      } catch (e) { console.error(e); }
 
-        if (timeLeft <= CONFIG.urgentTime) enableUrgentMode();
-        if (timeLeft <= 0) handleTimeout();
-      }, 1000);
+      // 如果还在 polling 状态，隔几秒再问一次
+      if (isPolling) {
+        setTimeout(poll, CONFIG.pollInterval);
+      }
     }
 
-    function startPolling() {
-      pollInterval = setInterval(async () => {
-        try {
-          const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
-          const json = await res.json();
-          if (json.status === 'success') {
-            handleSuccess(json.token);
-          }
-        } catch (e) { console.error(e); }
-      }, CONFIG.pollInterval);
-    }
-
-    // 视觉效果函数
     function enableUrgentMode() {
       document.getElementById('status-icon').classList.replace('text-apple-blue', 'text-apple-red');
       document.getElementById('progress-ring').classList.replace('text-apple-blue', 'text-apple-red');
@@ -175,16 +165,16 @@
     }
 
     function handleTimeout() {
+      isPolling = false;
       clearInterval(timerInterval);
-      clearInterval(pollInterval);
       stopUrgentMode();
       document.getElementById('step-timeout').classList.remove('hidden');
       document.getElementById('step-timeout').classList.add('flex');
     }
 
     function handleSuccess(token) {
+      isPolling = false;
       clearInterval(timerInterval);
-      clearInterval(pollInterval);
       stopUrgentMode();
       
       localStorage.setItem('access_token', token);
@@ -192,14 +182,12 @@
       document.getElementById('step-success').classList.add('flex');
       
       setTimeout(() => {
-        // 【TODO: 修改你的目标跳转链接】
-        window.location.href = 'https://apple.com'; 
+        window.location.href = 'https://example.com';
       }, 1500);
     }
 
-    // 启动！
     setProgress(100);
-    initAndStart();
+    init();
   </script>
 </body>
 </html>
