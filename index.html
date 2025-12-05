@@ -5,50 +5,160 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>访问受限</title>
   <style>
-    :root { --bg: #0a0a0a; --card: #1c1c1e; --text: #f5f5f7; --accent: #8b5cf6; }
-    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    /* 🎨 定义颜色变量：默认浅色模式 (Light Mode) */
+    :root {
+      --bg-color: #f2f2f7;           /* 浅灰背景 */
+      --card-bg: #ffffff;            /* 白色卡片 */
+      --text-main: #1c1c1e;          /* 深黑文字 */
+      --text-sub: #8e8e93;           /* 灰色副标题 */
+      --border-color: rgba(0,0,0,0.1);
+      --code-bg: rgba(0,0,0,0.05);   /* 验证码背景 */
+      --shadow: 0 10px 25px rgba(0,0,0,0.1);
+      --accent-color: #007aff;       /* iOS 蓝 */
+    }
+
+    /* 🌑 深色模式适配 (Dark Mode) - 当系统设置为深色时自动覆盖变量 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #000000;         /* 纯黑背景 */
+        --card-bg: #1c1c1e;          /* 深灰卡片 */
+        --text-main: #f5f5f7;        /* 浅白文字 */
+        --text-sub: #98989d;
+        --border-color: rgba(255,255,255,0.15);
+        --code-bg: rgba(255,255,255,0.1);
+        --shadow: 0 20px 40px rgba(0,0,0,0.4);
+        --accent-color: #0a84ff;
+      }
+    }
+
+    /* 通用样式 */
+    body {
+      margin: 0; 
+      padding: 0; 
+      background: var(--bg-color); 
+      color: var(--text-main); 
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; 
+      height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: background 0.3s ease, color 0.3s ease;
+    }
     
-    /* 容器 */
-    .container { text-align: center; width: 100%; max-width: 360px; padding: 20px; }
+    .container { 
+      width: 100%; 
+      max-width: 380px; 
+      padding: 20px; 
+      box-sizing: border-box;
+    }
     
-    /* 锁定卡片 */
-    .lock-card { background: var(--card); border-radius: 24px; padding: 40px 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); transition: transform 0.3s ease, opacity 0.3s ease; }
-    .hidden { display: none !important; opacity: 0; }
+    .lock-card { 
+      background: var(--card-bg); 
+      border-radius: 24px; 
+      padding: 40px 24px; 
+      box-shadow: var(--shadow); 
+      border: 1px solid var(--border-color); 
+      text-align: center;
+      transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .hidden { display: none !important; }
     
     /* 图标与文字 */
-    .icon-lock { font-size: 48px; margin-bottom: 20px; display: block; }
-    h1 { font-size: 20px; margin: 0 0 10px 0; font-weight: 600; }
-    p { font-size: 14px; color: #888; margin: 0 0 30px 0; line-height: 1.5; }
-    
-    /* 二维码图片容器 */
-    .qr-box { width: 180px; height: 180px; background: #fff; padding: 10px; border-radius: 12px; margin: 0 auto 30px auto; }
-    .qr-box img { width: 100%; height: 100%; object-fit: cover; }
+    .icon-wrapper {
+      width: 64px;
+      height: 64px;
+      background: var(--code-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px auto;
+      font-size: 32px;
+    }
 
-    /* 验证码显示 */
-    .code-display { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; position: relative; overflow: hidden; }
-    .code-number { font-family: monospace; font-size: 32px; letter-spacing: 8px; font-weight: bold; color: var(--text); display: block; }
-    .timer { font-size: 10px; color: #666; position: absolute; top: 5px; right: 8px; }
+    h1 { 
+      font-size: 22px; 
+      margin: 0 0 8px 0; 
+      font-weight: 700; 
+    }
+    
+    p { 
+      font-size: 15px; 
+      color: var(--text-sub); 
+      margin: 0 0 30px 0; 
+      line-height: 1.5; 
+    }
+    
+    /* 二维码图片容器 - 始终保持白色背景以便扫描 */
+    .qr-box { 
+      width: 180px; 
+      height: 180px; 
+      background: #ffffff; 
+      padding: 10px; 
+      border-radius: 16px; 
+      margin: 0 auto 30px auto; 
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    .qr-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+
+    /* 验证码显示区 */
+    .code-display { 
+      background: var(--code-bg); 
+      border-radius: 16px; 
+      padding: 15px; 
+      position: relative; 
+      margin-bottom: 20px;
+    }
+    
+    .code-number { 
+      font-family: "SF Mono", "Menlo", monospace; 
+      font-size: 36px; 
+      letter-spacing: 6px; 
+      font-weight: 700; 
+      color: var(--text-main); 
+      display: block; 
+    }
+    
+    .timer { 
+      position: absolute; 
+      top: 8px; 
+      right: 12px; 
+      font-size: 11px; 
+      color: var(--text-sub); 
+      font-weight: 600;
+      background: var(--card-bg);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
     
     /* 加载动画 */
-    .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--text); animation: spin 1s ease-in-out infinite; margin-right: 8px; vertical-align: middle; }
+    .spinner { 
+      display: inline-block; 
+      width: 18px; 
+      height: 18px; 
+      border: 2px solid var(--text-sub); 
+      border-radius: 50%; 
+      border-top-color: transparent; 
+      animation: spin 1s linear infinite; 
+      vertical-align: middle; 
+      margin-right: 6px; 
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* 解锁成功状态 */
-    .success-view { color: #4ade80; }
-    .btn { display: inline-block; background: var(--text); color: #000; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-weight: bold; margin-top: 20px; transition: opacity 0.2s; }
-    .btn:active { opacity: 0.8; }
+    .status-text { font-size: 13px; color: var(--text-sub); }
   </style>
 </head>
 <body>
 
   <div id="lockPage" class="container">
     <div class="lock-card">
-      <span class="icon-lock">🔒</span>
-      <h1>网页已加密</h1>
-      <p>请扫描下方二维码关注公众号<br>发送验证码获取访问权限</p>
+      <div class="icon-wrapper">🔒</div>
+      <h1>访问受限</h1>
+      <p>为了防止滥用，请扫码获取验证码<br>验证通过后自动跳转</p>
       
       <div class="qr-box">
-        <img src="https://www.haiyan.gov.cn/picture/-1/240308141912543626.png" alt="QR Code">
+        <img src="https://www.haiyan.gov.cn/picture/-1/240308141912543626.png" alt="Scan QR Code">
       </div>
 
       <div class="code-display">
@@ -56,30 +166,29 @@
         <span id="code" class="code-number">....</span>
       </div>
       
-      <div style="margin-top: 20px; font-size: 12px; color: #555;">
-        <span class="spinner"></span> 等待验证中...
+      <div class="status-text">
+        <span class="spinner"></span> 正在等待验证...
       </div>
     </div>
   </div>
 
   <div id="unlockPage" class="container hidden">
     <div class="lock-card">
-      <span class="icon-lock">🔓</span>
+      <div class="icon-wrapper" style="color: #34c759; background: rgba(52, 199, 89, 0.1);">🔓</div>
       <h1>验证成功</h1>
-      <p>正在前往目标页面...</p>
-      <div class="spinner" style="border-top-color: #4ade80;"></div>
+      <p>页面即将跳转，请稍候...</p>
+      <div class="spinner" style="border-color: #34c759; border-top-color: transparent;"></div>
     </div>
   </div>
 
   <script>
     // ================= 配置区域 =================
-    const API_BASE = '/api/web';  // 后端接口地址
+    const API_BASE = '/api/web';  
     const TARGET_URL = 'https://www.google.com'; // 🔓 解锁后跳转的目标网址 (请修改这里)
     // ===========================================
 
     let timerInterval, pollInterval;
 
-    // 页面加载时检查
     (function init() {
       if (checkCachedToken()) {
         unlockAndRedirect();
@@ -89,14 +198,10 @@
     })();
 
     function startLockFlow() {
-      // 1. 生成 4 位随机数字 (1000-9999)
       const code = Math.floor(Math.random() * 9000) + 1000;
       document.getElementById('code').innerText = code;
-
-      // 2. 告诉后端初始化这个 code
       fetch(`${API_BASE}?type=init&code=${code}`).catch(console.error);
 
-      // 3. 倒计时逻辑 (60秒)
       let timeLeft = 60;
       timerInterval = setInterval(() => {
         timeLeft--;
@@ -104,12 +209,11 @@
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           clearInterval(pollInterval);
-          alert('验证码已过期，请刷新页面重试');
+          alert('验证码已过期，请刷新页面');
           location.reload();
         }
       }, 1000);
 
-      // 4. 轮询查状态 (每 3 秒查一次)
       pollInterval = setInterval(async () => {
         try {
           const res = await fetch(`${API_BASE}?type=check&code=${code}`);
@@ -117,43 +221,28 @@
           if (json.status === 'success') {
             handleSuccess(json.token);
           }
-        } catch(e) { console.error(e); }
+        } catch(e) {}
       }, 3000);
     }
 
     function handleSuccess(token) {
       clearInterval(timerInterval);
       clearInterval(pollInterval);
-      
-      // 缓存 Token (默认有效期7天)
       localStorage.setItem('unlock_token', token);
       localStorage.setItem('token_time', Date.now());
-
-      // 切换界面
       document.getElementById('lockPage').classList.add('hidden');
       document.getElementById('unlockPage').classList.remove('hidden');
-
-      // 1.5秒后跳转
-      setTimeout(() => {
-        window.location.href = TARGET_URL;
-      }, 1500);
+      setTimeout(() => { window.location.href = TARGET_URL; }, 1500);
     }
 
-    // 检查本地是否有有效 Token
     function checkCachedToken() {
       const token = localStorage.getItem('unlock_token');
       const time = localStorage.getItem('token_time');
-      // 检查是否存在且未过期 (7天 = 604800000 毫秒)
-      if (token && time && (Date.now() - time < 604800000)) { 
-        return true; 
-      }
-      return false;
+      return (token && time && (Date.now() - time < 604800000));
     }
 
-    // 直接跳转
     function unlockAndRedirect() {
       document.getElementById('lockPage').classList.add('hidden');
-      // 可以直接跳转，不显示中间页，也可以显示一下 "Welcome Back"
       window.location.href = TARGET_URL;
     }
   </script>
