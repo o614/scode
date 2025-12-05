@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>访问受限</title>
   <style>
-    /* 🎨 定义颜色变量：默认浅色模式 (Light Mode) */
+    /* 🎨 颜色变量 (保持深色模式适配) */
     :root {
       --bg-color: #f2f2f7;
       --card-bg: #ffffff;
@@ -14,10 +14,8 @@
       --border-color: rgba(0,0,0,0.1);
       --code-bg: rgba(0,0,0,0.05);
       --shadow: 0 10px 25px rgba(0,0,0,0.1);
-      --accent-color: #007aff;
     }
 
-    /* 🌑 深色模式适配 (Dark Mode) */
     @media (prefers-color-scheme: dark) {
       :root {
         --bg-color: #000000;
@@ -27,135 +25,102 @@
         --border-color: rgba(255,255,255,0.15);
         --code-bg: rgba(255,255,255,0.1);
         --shadow: 0 20px 40px rgba(0,0,0,0.4);
-        --accent-color: #0a84ff;
       }
     }
 
-    /* 通用样式 */
     body {
-      margin: 0; 
-      padding: 0; 
-      background: var(--bg-color); 
-      color: var(--text-main); 
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; 
-      height: 100vh; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      transition: background 0.3s ease, color 0.3s ease;
+      margin: 0; padding: 0;
+      background: var(--bg-color); color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.3s ease;
     }
     
-    .container { 
-      width: 100%; 
-      max-width: 380px; 
-      padding: 20px; 
-      box-sizing: border-box;
-    }
+    .container { width: 100%; max-width: 340px; padding: 16px; box-sizing: border-box; }
     
     .lock-card { 
       background: var(--card-bg); 
-      border-radius: 24px; 
-      padding: 40px 24px; 
+      border-radius: 20px; /* 圆角稍微改小一点点适应紧凑感 */
+      padding: 24px 20px;  /* 📉 大幅减少内边距 */
       box-shadow: var(--shadow); 
       border: 1px solid var(--border-color); 
       text-align: center;
-      transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
     }
     
     .hidden { display: none !important; }
     
-    /* 图标包装器 - 已去除圆背景 */
-    .icon-wrapper {
-      margin: 0 auto 15px auto;
-      font-size: 56px; /* 放大图标 */
-      text-align: center;
-    }
-
     h1 { 
-      font-size: 22px; 
-      margin: 0 0 8px 0; 
+      font-size: 20px; /* 字号微调 */
+      margin: 0 0 6px 0; 
       font-weight: 700; 
     }
     
     p { 
-      font-size: 15px; 
+      font-size: 14px; 
       color: var(--text-sub); 
-      margin: 0 0 30px 0; 
-      line-height: 1.5; 
+      margin: 0 0 20px 0; /* 📉 减少标题和二维码的间距 */
+      line-height: 1.4; 
     }
     
-    /* 二维码图片容器 */
+    /* 二维码容器 */
     .qr-box { 
-      width: 180px; 
-      height: 180px; 
+      width: 160px; /* 稍微缩小一点二维码区域 */
+      height: 160px; 
       background: #ffffff; 
-      padding: 10px; 
-      border-radius: 16px; 
-      margin: 0 auto 30px auto; 
+      padding: 8px; /* 减少白边 */
+      border-radius: 12px; 
+      margin: 0 auto 20px auto; /* 📉 减少底部间距 */
       border: 1px solid rgba(0,0,0,0.1);
     }
-    .qr-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .qr-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
 
     /* 验证码显示区 */
     .code-display { 
       background: var(--code-bg); 
-      border-radius: 16px; 
-      padding: 20px 15px; 
+      border-radius: 12px; 
+      padding: 12px 10px; /* 📉 减少内边距 */
       position: relative; 
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     
-    /* 验证码数字 - 已更换字体样式 */
     .code-number { 
-      /* 使用更粗的无衬线字体栈 */
-      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 42px; /* 稍微加大字号 */
-      letter-spacing: 8px; /* 加大间距 */
-      font-weight: 800; /* 特粗 */
+      font-family: "Inter", -apple-system, sans-serif;
+      font-size: 36px; /* 字体稍微改小，更精致 */
+      letter-spacing: 6px; 
+      font-weight: 800; 
       color: var(--text-main); 
       display: block; 
       line-height: 1;
     }
     
     .timer { 
-      position: absolute; 
-      top: 8px; 
-      right: 12px; 
-      font-size: 11px; 
-      color: var(--text-sub); 
-      font-weight: 600;
-      background: var(--card-bg);
-      padding: 2px 6px;
-      border-radius: 6px;
+      position: absolute; top: 6px; right: 8px; 
+      font-size: 10px; color: var(--text-sub); font-weight: 600;
+      background: var(--card-bg); padding: 2px 5px; border-radius: 4px;
     }
     
-    /* 加载动画 */
+    /* 状态文字和加载圈 */
+    .status-text { font-size: 12px; color: var(--text-sub); display: flex; align-items: center; justify-content: center; }
+    
     .spinner { 
-      display: inline-block; 
-      width: 18px; 
-      height: 18px; 
+      width: 14px; height: 14px; /* 缩小加载圈 */
       border: 2px solid var(--text-sub); 
-      border-radius: 50%; 
-      border-top-color: transparent; 
-      animation: spin 1s linear infinite; 
-      vertical-align: middle; 
-      margin-right: 6px; 
+      border-radius: 50%; border-top-color: transparent; 
+      animation: spin 1s linear infinite; margin-right: 6px; 
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .status-text { font-size: 13px; color: var(--text-sub); }
   </style>
 </head>
 <body>
 
   <div id="lockPage" class="container">
     <div class="lock-card">
-      <div class="icon-wrapper">🔒</div>
       <h1>访问受限</h1>
-      <p>请输入下方验证码<br>验证通过后自动跳转</p>
+      <p>请扫码关注公众号获取验证码<br>验证通过后自动跳转</p>
       
       <div class="qr-box">
-        <img src="//img14.360buyimg.com/ling/jfs/t1/357137/38/17178/6526/6926bbc1F2518fce2/9326a50442957ff5.jpg" alt="Scan QR Code">
+        <img src="img14.360buyimg.com/ling/jfs/t1/357137/38/17178/6526/6926bbc1F2518fce2/9326a50442957ff5.jpg" alt="Scan QR Code">
       </div>
 
       <div class="code-display">
@@ -171,17 +136,18 @@
 
   <div id="unlockPage" class="container hidden">
     <div class="lock-card">
-      <div class="icon-wrapper" style="color: #34c759;">🔓</div>
-      <h1>验证成功</h1>
-      <p>页面即将跳转，请稍候...</p>
-      <div class="spinner" style="border-color: #34c759; border-top-color: transparent;"></div>
+      <h1 style="color: #34c759; margin-bottom: 10px;">验证成功</h1>
+      <p style="margin-bottom: 0;">页面即将跳转...</p>
+      <div style="height: 20px;"></div> <div class="status-text">
+        <div class="spinner" style="border-color: #34c759; border-top-color: transparent;"></div> 跳转中
+      </div>
     </div>
   </div>
 
   <script>
     // ================= 配置区域 =================
     const API_BASE = '/api/web';  
-    const TARGET_URL = 'https://example.com/'; // 🔓 解锁后跳转的目标网址 (请修改这里)
+    const TARGET_URL = 'https://example.com/'; // 🔓 解锁后跳转的目标网址
     // ===========================================
 
     let timerInterval, pollInterval;
