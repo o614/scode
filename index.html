@@ -1,362 +1,161 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="antialiased">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#000000">
-  <title>Movie Hub</title>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            dark: { bg: '#000000', card: '#1C1C1E', text: '#F5F5F7', sub: '#98989D', border: 'rgba(255,255,255,0.15)', input: 'rgba(255, 255, 255, 0.1)' }
-          },
-          fontFamily: { sans: ['SF Pro Display', '-apple-system', 'sans-serif'] },
-          animation: { 
-            'enter': 'enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            'shake': 'shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite',
-          },
-          keyframes: { 
-            enter: { '0%': { opacity: '0', transform: 'translateY(20px) scale(0.98)' }, '100%': { opacity: '1', transform: 'translateY(0) scale(1)' } },
-            shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } }
-          }
-        }
-      }
-    }
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>访问受限</title>
   <style>
-    body { background-color: #000000; color: #F5F5F7; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-    .page { display: none; }
-    .page.active { display: block; animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .progress-ring__circle { transition: stroke-dashoffset 1s linear; transform: rotate(-90deg); transform-origin: 50% 50%; }
-    .active-scale:active { transform: scale(0.96); transition: transform 0.1s; }
+    :root { --bg: #0a0a0a; --card: #1c1c1e; --text: #f5f5f7; --accent: #8b5cf6; }
+    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    
+    /* 容器 */
+    .container { text-align: center; width: 100%; max-width: 360px; padding: 20px; }
+    
+    /* 锁定卡片 */
+    .lock-card { background: var(--card); border-radius: 24px; padding: 40px 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); transition: transform 0.3s ease, opacity 0.3s ease; }
+    .hidden { display: none !important; opacity: 0; }
+    
+    /* 图标与文字 */
+    .icon-lock { font-size: 48px; margin-bottom: 20px; display: block; }
+    h1 { font-size: 20px; margin: 0 0 10px 0; font-weight: 600; }
+    p { font-size: 14px; color: #888; margin: 0 0 30px 0; line-height: 1.5; }
+    
+    /* 二维码图片容器 */
+    .qr-box { width: 180px; height: 180px; background: #fff; padding: 10px; border-radius: 12px; margin: 0 auto 30px auto; }
+    .qr-box img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* 验证码显示 */
+    .code-display { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; position: relative; overflow: hidden; }
+    .code-number { font-family: monospace; font-size: 32px; letter-spacing: 8px; font-weight: bold; color: var(--text); display: block; }
+    .timer { font-size: 10px; color: #666; position: absolute; top: 5px; right: 8px; }
+    
+    /* 加载动画 */
+    .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--text); animation: spin 1s ease-in-out infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 解锁成功状态 */
+    .success-view { color: #4ade80; }
+    .btn { display: inline-block; background: var(--text); color: #000; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-weight: bold; margin-top: 20px; transition: opacity 0.2s; }
+    .btn:active { opacity: 0.8; }
   </style>
 </head>
+<body>
 
-<body class="font-sans min-h-screen flex flex-col pb-safe relative overflow-x-hidden">
-
-  <nav class="sticky top-0 z-40 bg-[#1C1C1E]/80 backdrop-blur-xl border-b border-dark-border px-6 py-4 pt-[max(1rem,env(safe-area-inset-top))] flex justify-between items-center">
-    <div class="flex items-center gap-2 font-bold text-lg tracking-tight cursor-pointer" onclick="showPage('home')">
-      <i class="ph-fill ph-film-strip text-purple-500 text-xl"></i>
-      <span>Movie Hub</span>
-    </div>
-    <div id="lockStatus" class="text-xs font-medium bg-white/10 px-3 py-1 rounded-full text-dark-sub flex items-center gap-1">
-      <i class="ph-fill ph-lock-key"></i> 未解锁
-    </div>
-  </nav>
-
-  <main id="page-home" class="page active flex-1 max-w-2xl mx-auto w-full px-6 py-12">
-    <div class="text-center mb-12 mt-10">
-      <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">全网影视聚合</h1>
-      <p class="text-dark-sub">聚合 阿里云盘、夸克、百度网盘 优质资源</p>
-    </div>
-
-    <div class="relative group max-w-lg mx-auto">
-      <div class="absolute inset-0 bg-purple-600/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-      <div class="relative flex items-center">
-        <i class="ph-bold ph-magnifying-glass absolute left-5 text-dark-sub text-xl"></i>
-        <input type="text" id="searchInput" 
-          class="w-full bg-dark-input text-lg py-5 pl-14 pr-32 rounded-full outline-none focus:ring-2 focus:ring-purple-500/50 transition-all placeholder-white/30 text-white border border-white/10"
-          placeholder="搜索电影、剧集..." 
-          onkeypress="if(event.keyCode===13) doSearch()">
-        
-        <button onclick="doSearch()" class="absolute right-2 bg-white text-black font-bold px-6 py-3 rounded-full hover:bg-gray-200 active:scale-95 transition-all">
-          搜索
-        </button>
-      </div>
-    </div>
-
-    <div class="mt-16">
-      <h3 class="text-sm font-bold text-dark-sub uppercase tracking-wider mb-4">热门搜索</h3>
-      <div class="flex flex-wrap gap-3">
-        <span onclick="quickSearch('奥本海默')" class="px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-sm hover:bg-white/10 cursor-pointer transition-colors">🔥 奥本海默</span>
-        <span onclick="quickSearch('周处除三害')" class="px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-sm hover:bg-white/10 cursor-pointer transition-colors">周处除三害</span>
-        <span onclick="quickSearch('繁花')" class="px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-sm hover:bg-white/10 cursor-pointer transition-colors">繁花</span>
-        <span onclick="quickSearch('沙丘2')" class="px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-sm hover:bg-white/10 cursor-pointer transition-colors">沙丘2</span>
-      </div>
-    </div>
-  </main>
-
-  <main id="page-results" class="page flex-1 max-w-3xl mx-auto w-full px-4 py-8">
-    <div class="flex items-center gap-2 mb-6 text-dark-sub cursor-pointer hover:text-white" onclick="showPage('home')">
-      <i class="ph-bold ph-caret-left"></i> 返回首页
-    </div>
-    
-    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-      搜索结果: <span id="searchKeyword" class="text-purple-400">...</span>
-    </h2>
-
-    <div id="resultsList" class="space-y-4">
-      </div>
-  </main>
-
-  <div id="lockModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-[#1C1C1E] w-full max-w-[400px] rounded-[32px] border border-white/10 overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="lockCard">
+  <div id="lockPage" class="container">
+    <div class="lock-card">
+      <span class="icon-lock">🔒</span>
+      <h1>网页已加密</h1>
+      <p>请扫描下方二维码关注公众号<br>发送验证码获取访问权限</p>
       
-      <div id="step-verify" class="p-8 flex flex-col items-center">
-        <div class="relative w-16 h-16 mb-4 flex items-center justify-center">
-          <svg class="w-16 h-16 absolute top-0 left-0"><circle class="text-white/10" stroke-width="4" stroke="currentColor" fill="transparent" r="30" cx="32" cy="32"/><circle id="progress-ring" class="text-purple-500 progress-ring__circle" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="transparent" r="30" cx="32" cy="32"/></svg>
-          <i id="status-icon" class="ph-fill ph-lock-key text-2xl text-purple-500 transition-colors"></i>
-        </div>
-        <h3 class="text-xl font-bold text-white mb-2">获取访问密码</h3>
-        <p class="text-dark-sub text-sm text-center mb-6 px-4">请扫码关注公众号，发送下方数字解锁真实链接。</p>
-        <div class="w-32 h-32 bg-white p-1 rounded-xl mb-6">
-          <img src="https://www.haiyan.gov.cn/picture/-1/240308141912543626.png" class="w-full h-full object-cover rounded-lg">
-        </div>
-        <div id="code-box" class="w-full bg-black/30 border border-white/10 rounded-xl py-4 mb-4 text-center relative overflow-hidden">
-          <div id="timer-text" class="absolute top-2 right-3 text-[10px] font-bold text-gray-500">60s</div>
-          <div id="code-display" class="text-4xl font-mono font-bold tracking-widest text-white">----</div>
-          <div id="urgent-bg" class="absolute inset-0 bg-red-500/20 opacity-0 transition-opacity"></div>
-        </div>
-        <div class="text-xs text-purple-400 flex items-center gap-2">
-          <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-          等待手机发送...
-        </div>
+      <div class="qr-box">
+        <img src="https://www.haiyan.gov.cn/picture/-1/240308141912543626.png" alt="QR Code">
       </div>
 
-      <div id="step-success" class="absolute inset-0 bg-green-600 flex-col items-center justify-center text-white hidden">
-        <i class="ph-fill ph-check-circle text-5xl mb-4"></i>
-        <h3 class="text-2xl font-bold">验证通过</h3>
-        <p class="opacity-80 mt-2 text-sm">正在显示资源链接...</p>
+      <div class="code-display">
+        <div id="timer" class="timer">60s</div>
+        <span id="code" class="code-number">....</span>
       </div>
-
-      <button onclick="closeModal()" class="absolute top-4 right-4 text-white/30 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+      
+      <div style="margin-top: 20px; font-size: 12px; color: #555;">
+        <span class="spinner"></span> 等待验证中...
+      </div>
     </div>
   </div>
 
-  <div id="linkModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-[#1C1C1E] w-full max-w-md rounded-3xl border border-white/10 p-8 shadow-2xl relative transform scale-95 transition-transform duration-300" id="linkCard">
-      <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="ph-fill ph-link text-3xl"></i></div>
-        <h3 class="text-xl font-bold text-white">资源获取成功</h3>
-        <p class="text-dark-sub text-sm mt-2" id="resourceName">...</p>
-      </div>
-      <div class="bg-black/30 rounded-xl p-4 border border-white/5 flex items-center justify-between gap-3 mb-6">
-        <div class="truncate text-purple-400 font-mono text-sm flex-1" id="realLink">...</div>
-        <button onclick="copyLink()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">复制</button>
-      </div>
-      <a id="jumpBtn" href="#" target="_blank" class="block w-full bg-white text-black font-bold py-3.5 rounded-xl text-center hover:bg-gray-200 transition-colors">立即跳转下载</a>
-      <button onclick="closeLinkModal()" class="absolute top-4 right-4 text-white/30 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+  <div id="unlockPage" class="container hidden">
+    <div class="lock-card">
+      <span class="icon-lock">🔓</span>
+      <h1>验证成功</h1>
+      <p>正在前往目标页面...</p>
+      <div class="spinner" style="border-top-color: #4ade80;"></div>
     </div>
   </div>
 
   <script>
-    // --- 配置 ---
-    const CONFIG = { apiBase: '/api/web', pollInterval: 5000, timeout: 60, urgentTime: 15 };
-    let isUnlocked = false;
-    let currentResource = {};
+    // ================= 配置区域 =================
+    const API_BASE = '/api/web';  // 后端接口地址
+    const TARGET_URL = 'https://www.google.com'; // 🔓 解锁后跳转的目标网址 (请修改这里)
+    // ===========================================
 
-    // --- 路由 & 搜索 ---
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(el => { el.classList.remove('active'); el.style.opacity = 0; });
-      const target = document.getElementById('page-' + pageId);
-      target.classList.add('active');
-      setTimeout(() => target.style.opacity = 1, 10);
-    }
-
-    function quickSearch(keyword) {
-      document.getElementById('searchInput').value = keyword;
-      doSearch();
-    }
-
-    // 🔥 核心修改：这里改成了真实请求后端
-    async function doSearch() {
-      const q = document.getElementById('searchInput').value.trim();
-      if (!q) return document.getElementById('searchInput').focus();
-
-      document.getElementById('searchKeyword').innerText = q;
-      const list = document.getElementById('resultsList');
-      
-      // 显示 Loading
-      list.innerHTML = `<div class="text-center py-16 text-dark-sub"><i class="ph-bold ph-spinner animate-spin text-3xl"></i><p class="mt-3">全网搜寻中...</p></div>`;
-      showPage('results');
-
-      try {
-        // 发起真实请求
-        const res = await fetch(`${CONFIG.apiBase}?type=search&q=${encodeURIComponent(q)}`);
-        const json = await res.json();
-
-        if (json.status === 'success') {
-          renderResults(json.data);
-        } else {
-          list.innerHTML = `<div class="text-center py-16 text-red-400">${json.msg || '搜索失败'}</div>`;
-        }
-      } catch (e) {
-        list.innerHTML = `<div class="text-center py-16 text-red-400">网络连接失败</div>`;
-      }
-    }
-
-    // 渲染真实结果
-    function renderResults(data) {
-      const list = document.getElementById('resultsList');
-      list.innerHTML = ''; 
-
-      if (!data || data.length === 0) {
-        list.innerHTML = `<div class="text-center py-16 text-dark-sub">未找到相关资源</div>`;
-        return;
-      }
-
-      data.forEach(item => {
-        let meta = { name: '网盘资源', color: 'text-gray-400', bg: 'bg-gray-500/20', icon: 'ph-hard-drives' };
-        if (item.type === 'aliyun') meta = { name: '阿里云盘', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: 'ph-cloud' };
-        else if (item.type === 'quark') meta = { name: '夸克网盘', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: 'ph-atom' };
-        else if (item.type === 'baidu') meta = { name: '百度网盘', color: 'text-red-400', bg: 'bg-red-500/20', icon: 'ph-hard-drives' };
-
-        const html = `
-          <div onclick="handleResourceClick('${item.link}', '${item.title.replace(/'/g, "")}')" 
-               class="bg-dark-card border border-dark-border rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between cursor-pointer hover:border-white/30 transition-all active:scale-[0.98] gap-4">
-            <div class="flex items-start gap-4 overflow-hidden">
-              <div class="w-12 h-12 ${meta.bg} ${meta.color} rounded-xl flex-shrink-0 flex items-center justify-center text-2xl">
-                <i class="ph-fill ${meta.icon}"></i>
-              </div>
-              <div class="min-w-0">
-                <h3 class="font-bold text-lg text-white truncate leading-tight">${item.title}</h3>
-                <p class="text-xs text-dark-sub mt-1 line-clamp-2">${item.snippet || '暂无简介'}</p>
-                <div class="flex items-center gap-2 text-xs text-dark-sub mt-2">
-                  <span class="bg-white/10 px-2 py-0.5 rounded text-white/80">${meta.name}</span>
-                  <span>来源: 网络搜索</span>
-                </div>
-              </div>
-            </div>
-            <div class="hidden md:flex w-10 h-10 rounded-full bg-white/5 items-center justify-center text-dark-sub flex-shrink-0">
-              <i class="ph-bold ph-caret-right"></i>
-            </div>
-          </div>
-        `;
-        list.insertAdjacentHTML('beforeend', html);
-      });
-    }
-
-    // --- 验证逻辑 ---
-    function handleResourceClick(link, title) {
-      currentResource = { link, title };
-      if (checkCachedToken()) showLinkModal(); else openModal();
-    }
-
-    // 验证弹窗相关变量
     let timerInterval, pollInterval;
 
-    function openModal() {
-      const modal = document.getElementById('lockModal');
-      const card = document.getElementById('lockCard');
-      modal.classList.remove('hidden');
-      setTimeout(() => { modal.classList.remove('opacity-0'); card.classList.remove('scale-95'); card.classList.add('scale-100'); }, 10);
-      startAuthFlow();
-    }
+    // 页面加载时检查
+    (function init() {
+      if (checkCachedToken()) {
+        unlockAndRedirect();
+      } else {
+        startLockFlow();
+      }
+    })();
 
-    function closeModal() {
-      const modal = document.getElementById('lockModal');
-      const card = document.getElementById('lockCard');
-      modal.classList.add('opacity-0'); card.classList.add('scale-95');
-      setTimeout(() => { modal.classList.add('hidden'); document.getElementById('step-verify').classList.remove('hidden'); document.getElementById('step-success').classList.add('hidden'); }, 300);
-      clearInterval(timerInterval); clearInterval(pollInterval);
-    }
+    function startLockFlow() {
+      // 1. 生成 4 位随机数字 (1000-9999)
+      const code = Math.floor(Math.random() * 9000) + 1000;
+      document.getElementById('code').innerText = code;
 
-    function startAuthFlow() {
-      // 使用更安全的随机数
-      const array = new Uint32Array(1);
-      window.crypto.getRandomValues(array);
-      const code = (array[0] % 9000) + 1000;
-      
-      document.getElementById('code-display').innerText = code;
-      
-      // 发起后端初始化
-      fetch(`${CONFIG.apiBase}?type=init&code=${code}`).catch(console.error);
+      // 2. 告诉后端初始化这个 code
+      fetch(`${API_BASE}?type=init&code=${code}`).catch(console.error);
 
-      // 倒计时
-      let timeLeft = CONFIG.timeout;
-      const circle = document.getElementById('progress-ring');
-      const circumference = circle.r.baseVal.value * 2 * Math.PI;
-      circle.style.strokeDasharray = `${circumference} ${circumference}`;
-      
+      // 3. 倒计时逻辑 (60秒)
+      let timeLeft = 60;
       timerInterval = setInterval(() => {
         timeLeft--;
-        const offset = circumference - (timeLeft / CONFIG.timeout) * circumference;
-        circle.style.strokeDashoffset = offset;
-        document.getElementById('timer-text').innerText = timeLeft + 's';
-        
-        if (timeLeft <= CONFIG.urgentTime) {
-           document.getElementById('code-display').classList.add('text-red-500', 'animate-shake');
-           document.getElementById('status-icon').classList.replace('text-purple-500', 'text-red-500');
-           document.getElementById('progress-ring').classList.replace('text-purple-500', 'text-red-500');
-        }
+        document.getElementById('timer').innerText = timeLeft + 's';
         if (timeLeft <= 0) {
-           clearInterval(timerInterval);
-           alert('验证码已过期');
-           closeModal();
+          clearInterval(timerInterval);
+          clearInterval(pollInterval);
+          alert('验证码已过期，请刷新页面重试');
+          location.reload();
         }
       }, 1000);
 
-      // 轮询
+      // 4. 轮询查状态 (每 3 秒查一次)
       pollInterval = setInterval(async () => {
         try {
-          const res = await fetch(`${CONFIG.apiBase}?type=check&code=${code}`);
+          const res = await fetch(`${API_BASE}?type=check&code=${code}`);
           const json = await res.json();
-          if (json.status === 'success') handleSuccess(json.token);
-        } catch(e) {}
-      }, CONFIG.pollInterval);
+          if (json.status === 'success') {
+            handleSuccess(json.token);
+          }
+        } catch(e) { console.error(e); }
+      }, 3000);
     }
 
     function handleSuccess(token) {
-      clearInterval(timerInterval); clearInterval(pollInterval);
-      localStorage.setItem('access_token', token);
+      clearInterval(timerInterval);
+      clearInterval(pollInterval);
+      
+      // 缓存 Token (默认有效期7天)
+      localStorage.setItem('unlock_token', token);
       localStorage.setItem('token_time', Date.now());
-      
-      document.getElementById('step-verify').classList.add('hidden');
-      document.getElementById('step-success').classList.remove('hidden');
-      document.getElementById('step-success').classList.add('flex');
-      
-      isUnlocked = true;
-      updateLockStatus();
-      setTimeout(() => { closeModal(); showLinkModal(); }, 1500);
+
+      // 切换界面
+      document.getElementById('lockPage').classList.add('hidden');
+      document.getElementById('unlockPage').classList.remove('hidden');
+
+      // 1.5秒后跳转
+      setTimeout(() => {
+        window.location.href = TARGET_URL;
+      }, 1500);
     }
 
-    function showLinkModal() {
-      const modal = document.getElementById('linkModal');
-      const card = document.getElementById('linkCard');
-      document.getElementById('resourceName').innerText = currentResource.title;
-      document.getElementById('realLink').innerText = currentResource.link;
-      document.getElementById('jumpBtn').href = currentResource.link;
-      modal.classList.remove('hidden');
-      setTimeout(() => { modal.classList.remove('opacity-0'); card.classList.remove('scale-95'); card.classList.add('scale-100'); }, 10);
-    }
-
-    function closeLinkModal() {
-      const modal = document.getElementById('linkModal');
-      modal.classList.add('opacity-0');
-      setTimeout(() => modal.classList.add('hidden'), 300);
-    }
-
-    function copyLink() {
-      navigator.clipboard.writeText(currentResource.link);
-      alert('复制成功');
-    }
-
+    // 检查本地是否有有效 Token
     function checkCachedToken() {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('unlock_token');
       const time = localStorage.getItem('token_time');
+      // 检查是否存在且未过期 (7天 = 604800000 毫秒)
       if (token && time && (Date.now() - time < 604800000)) { 
-        isUnlocked = true;
-        updateLockStatus();
-        return true;
+        return true; 
       }
       return false;
     }
 
-    function updateLockStatus() {
-      const el = document.getElementById('lockStatus');
-      el.className = "text-xs font-medium bg-green-500/20 text-green-400 px-3 py-1 rounded-full flex items-center gap-1";
-      el.innerHTML = '<i class="ph-fill ph-check-circle"></i> 已解锁';
+    // 直接跳转
+    function unlockAndRedirect() {
+      document.getElementById('lockPage').classList.add('hidden');
+      // 可以直接跳转，不显示中间页，也可以显示一下 "Welcome Back"
+      window.location.href = TARGET_URL;
     }
-
-    checkCachedToken();
   </script>
 </body>
 </html>
