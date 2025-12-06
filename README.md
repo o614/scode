@@ -24,6 +24,8 @@
 
 ![e3671a54-8c9c-4224-9648-65ae2657ac8c](https://github.com/user-attachments/assets/b24724ef-aa7a-43c5-8043-a8f987ee9bf0)
 
+![录制_2025_12_06_09_13_09_470 - Trim](https://github.com/user-attachments/assets/16eab421-7c6a-496d-961a-2a543d564297)
+
 
 * 在线演示：[https://scode-rose.vercel.app](https://scode-rose.vercel.app)
 
